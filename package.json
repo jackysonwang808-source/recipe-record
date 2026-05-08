@@ -1,0 +1,14 @@
+{
+  "name": "receipt-scanner-app",
+  "version": "1.0.0",
+  "description": "收据扫描助手 - 使用摄像头读取收据数据并导出Excel",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8080",
+    "build": "mkdir -p dist && cp index.html dist/ && cp style.css dist/ && cp script.js dist/",
+    "deploy": "npm run build && echo 'Build completed. Deploy dist/ folder to your hosting provider.'"
+  },
+  "keywords": ["receipt", "scanner", "ocr", "excel", "camera"],
+  "author": "",
+  "license": "MIT"
+}

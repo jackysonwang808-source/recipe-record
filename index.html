@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>收据扫描助手 - 手机摄像头OCR识别收据数据并导出Excel</title>
+    <meta name="description" content="收据扫描助手是一款免费在线工具，使用手机摄像头扫描收据，自动OCR识别商家名称、日期、金额等数据，并支持导出Excel文件进行管理。">
+    <meta name="keywords" content="收据扫描,收据识别,OCR识别,收据OCR,Excel导出,收据管理,电子发票,手机扫描">
+    <meta name="author" content="收据扫描助手">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- 结构化数据 -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "收据扫描助手",
+        "description": "使用手机摄像头扫描收据，自动识别数据并导出Excel文件",
+        "applicationCategory": "ProductivityApplication",
+        "featureList": [
+            "手机摄像头实时扫描",
+            "OCR文字自动识别",
+            "智能解析收据数据",
+            "Excel文件导出"
+        ]
+    }
+    </script>
+    
+    <!-- Open Graph 标签 -->
+    <meta property="og:title" content="收据扫描助手 - 手机摄像头OCR识别收据数据">
+    <meta property="og:description" content="免费在线收据扫描工具，使用OCR技术自动识别收据信息并导出Excel">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter 卡片 -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="收据扫描助手">
+    <meta name="twitter:description" content="使用手机摄像头扫描收据，自动识别并导出Excel">
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>收据扫描助手</h1>
+            <p>实时扫描收据，自动识别数据并导出Excel</p>
+        </header>
+        
+        <!-- 模式切换 -->
+        <div class="mode-switch">
+            <button id="realtime-mode" class="mode-btn active">⚡ 实时扫描</button>
+            <button id="manual-mode" class="mode-btn">📷 手动拍照</button>
+        </div>
+
+        <main>
+            <!-- 摄像头区域 -->
+            <section class="camera-section">
+                <div class="camera-container">
+                    <video id="video" autoplay playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    <div class="scan-frame">
+                        <div class="scan-corners">
+                            <div class="corner top-left"></div>
+                            <div class="corner top-right"></div>
+                            <div class="corner bottom-left"></div>
+                            <div class="corner bottom-right"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 实时识别状态 -->
+                    <div class="realtime-status" id="realtime-status">
+                        <div class="status-dot" id="status-dot"></div>
+                        <span id="status-text">准备扫描</span>
+                    </div>
+                    
+                    <!-- 实时识别结果预览 -->
+                    <div class="realtime-result" id="realtime-result" style="display: none;">
+                        <div class="result-item">
+                            <span class="label">商家:</span>
+                            <span id="realtime-merchant">-</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="label">日期:</span>
+                            <span id="realtime-date">-</span>
+                        </div>
+                        <div class="result-item highlight">
+                            <span class="label">金额:</span>
+                            <span id="realtime-amount">-</span>
+                        </div>
+                    </div>
+                    
+                    <div class="camera-overlay">
+                        <button id="capture-btn" class="capture-btn">
+                            <span class="camera-icon">📷</span>
+                            <span>拍照扫描</span>
+                        </button>
+                        <button id="confirm-btn" class="confirm-btn" style="display: none;">
+                            <span>✅ 确认保存</span>
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
+                <button id="upload-btn" class="upload-btn">📁 上传图片</button>
+            </section>
+
+            <!-- 识别结果 -->
+            <section class="result-section" id="result-section" style="display: none;">
+                <h2>识别结果</h2>
+                <div class="result-image">
+                    <img id="preview-image" src="" alt="收据照片">
+                </div>
+                <div class="ocr-text" id="ocr-text"></div>
+                
+                <!-- 解析数据 -->
+                <div class="parsed-data">
+                    <h3>解析信息</h3>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <label>商家名称</label>
+                            <input type="text" id="merchant" placeholder="自动识别中...">
+                        </div>
+                        <div class="data-item">
+                            <label>日期</label>
+                            <input type="text" id="date" placeholder="自动识别中...">
+                        </div>
+                        <div class="data-item">
+                            <label>金额</label>
+                            <input type="text" id="amount" placeholder="自动识别中...">
+                        </div>
+                        <div class="data-item">
+                            <label>类别</label>
+                            <select id="category">
+                                <option value="餐饮">餐饮</option>
+                                <option value="交通">交通</option>
+                                <option value="购物">购物</option>
+                                <option value="娱乐">娱乐</option>
+                                <option value="医疗">医疗</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button id="save-btn" class="save-btn">💾 保存到列表</button>
+                </div>
+            </section>
+
+            <!-- 收据列表 -->
+            <section class="list-section">
+                <h2>收据列表</h2>
+                <div class="list-header">
+                    <span>共 <span id="list-count">0</span> 条记录</span>
+                    <button id="export-btn" class="export-btn" disabled>📊 导出Excel</button>
+                </div>
+                <table id="receipt-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>商家</th>
+                            <th>金额</th>
+                            <th>类别</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receipt-body">
+                        <tr>
+                            <td colspan="5" class="empty">暂无数据</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <!-- 加载提示 -->
+        <div class="loading-overlay" id="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p id="loading-text">正在识别中...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
